@@ -178,7 +178,7 @@ int main(int argc, char **argv)
 		else {
 			die("Unknown code/block size\n");
 		}
-		printf("write size is %d\n", write_size);
+		//printf("write size is %d\n", write_size);
 		r = teensy_write(buf, write_size, first_block ? 3.0 : 0.25);
 		if (!r) die("error writing to Teensy\n");
 		first_block = 0;
@@ -194,6 +194,10 @@ int main(int argc, char **argv)
 		memset(buf + 3, 0, sizeof(buf) - 3);
 		teensy_write(buf, write_size, 0.25);
 	}
+
+	Sleep(5000);
+	teensy_write("ident", 5, 0.25);
+
 	teensy_close();
 	return 0;
 }
@@ -210,6 +214,8 @@ extern "C" {
 	#include "hidclass.h"
 }
 
+
+
 HANDLE open_usb_device(int vid, int pid)
 {
 	GUID guid;
@@ -222,15 +228,26 @@ HANDLE open_usb_device(int vid, int pid)
 	BOOL ret;
 
 	HidD_GetHidGuid(&guid);
+
+	printf_s("%x-%x-%x-", guid.Data1, guid.Data2, guid.Data3);
+	for (int i = 0; i < 8; i++) {
+		if (i == 2)
+			printf_s("-");
+		printf_s("%x", guid.Data4[i]);
+	}
+	printf_s("\n");
+
 	info = SetupDiGetClassDevs(&guid, NULL, NULL, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 	if (info == INVALID_HANDLE_VALUE) return NULL;
 	for (index = 0; 1; index++) {
 		iface.cbSize = sizeof(SP_DEVICE_INTERFACE_DATA);
 		ret = SetupDiEnumDeviceInterfaces(info, NULL, &guid, index, &iface);
 		if (!ret) {
+			printf("no enum %d\n",index);
 			SetupDiDestroyDeviceInfoList(info);
 			break;
 		}
+		printf_s("index %d ret %d\n", index,ret);
 		SetupDiGetInterfaceDeviceDetail(info, &iface, NULL, 0, &required_size, NULL);
 		details = (SP_DEVICE_INTERFACE_DETAIL_DATA *)malloc(required_size);
 		if (details == NULL) continue;
