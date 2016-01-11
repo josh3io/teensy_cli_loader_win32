@@ -178,8 +178,8 @@ int main(int argc, char **argv)
 		else {
 			die("Unknown code/block size\n");
 		}
-		//printf("write size is %d\n", write_size);
-		r = teensy_write(buf, write_size, first_block ? 3.0 : 0.25);
+		printf("write size is %d\n", write_size);
+		r = teensy_write(buf, write_size, first_block ? 3.0 : 0.1);
 		if (!r) die("error writing to Teensy\n");
 		first_block = 0;
 	}
